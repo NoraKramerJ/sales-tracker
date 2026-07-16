@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Sale } from '../sale.model';
+import { Sale, UserType } from '../sale.model';
 import { SaleService } from '../sale.service';
 
 @Component({
@@ -36,6 +36,13 @@ import { SaleService } from '../sale.service';
           <option>Closed</option>
         </select>
       </label>
+      <label>
+        User Type
+        <select [(ngModel)]="selectedUserTypeId" name="userTypeId">
+          <option [ngValue]="null">-- None --</option>
+          <option *ngFor="let ut of userTypes" [ngValue]="ut.id">{{ ut.typeName }}</option>
+        </select>
+      </label>
       <div style="display:flex;gap:8px;margin-top:8px;">
         <button class="primary" type="submit">{{ isEdit ? 'Update' : 'Create' }}</button>
         <button class="secondary" type="button" (click)="cancel()">Cancel</button>
@@ -45,6 +52,8 @@ import { SaleService } from '../sale.service';
 })
 export class SaleFormComponent implements OnInit {
   sale: Sale = { customerName: '', product: '', amount: 0, saleDate: '', status: 'Open' };
+  userTypes: UserType[] = [];
+  selectedUserTypeId: number | null = null;
   isEdit = false;
   private id?: number;
 
@@ -55,15 +64,26 @@ export class SaleFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Load user types for the dropdown
+    this.saleService.getAllUserTypes().subscribe(data => this.userTypes = data);
+
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.isEdit = true;
       this.id = +idParam;
-      this.saleService.getById(this.id).subscribe(data => this.sale = data);
+      this.saleService.getById(this.id).subscribe(data => {
+        this.sale = data;
+        this.selectedUserTypeId = data.userType?.id ?? null;
+      });
     }
   }
 
   save(): void {
+    // Attach the selected user type id before saving
+    this.sale.userType = this.selectedUserTypeId
+      ? { id: this.selectedUserTypeId, typeName: '' }
+      : undefined;
+
     if (this.isEdit && this.id) {
       this.saleService.update(this.id, this.sale).subscribe(() => this.router.navigate(['/']));
     } else {

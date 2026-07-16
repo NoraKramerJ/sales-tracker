@@ -1,13 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Sale } from './sale.model';
+import { Sale, UserType } from './sale.model';
 
 @Injectable({ providedIn: 'root' })
 export class SaleService {
   private apiUrl = 'http://localhost:8080/api/sales';
+  private userTypeUrl = 'http://localhost:8080/api/user-types';
 
   constructor(private http: HttpClient) {}
+
+  // --- Sale methods ---
 
   getAll(): Observable<Sale[]> {
     return this.http.get<Sale[]>(this.apiUrl);
@@ -27,5 +30,11 @@ export class SaleService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  // --- UserType methods ---
+
+  getAllUserTypes(): Observable<UserType[]> {
+    return this.http.get<UserType[]>(this.userTypeUrl);
   }
 }

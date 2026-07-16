@@ -17,6 +17,11 @@ public class Sale {
     private LocalDate saleDate;
     private String status; // e.g. "Open", "Closed", "Pending"
 
+    // Many Sales belong to One UserType
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_type_id")  // matches the FK column in the sales table
+    private UserType userType;
+
     public Sale() {}
 
     public Long getId() { return id; }
@@ -36,4 +41,7 @@ public class Sale {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public UserType getUserType() { return userType; }
+    public void setUserType(UserType userType) { this.userType = userType; }
 }

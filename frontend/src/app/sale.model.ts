@@ -1,3 +1,9 @@
+export interface UserType {
+  id: number;
+  typeName: string;
+  phoneNumber?: string;
+}
+
 export interface Sale {
   id?: number;
   customerName: string;
@@ -5,4 +11,5 @@ export interface Sale {
   amount: number;
   saleDate: string;
   status: string;
+  userType?: UserType;
 }

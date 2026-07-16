@@ -47,7 +47,7 @@ const AMOUNT_LIMIT = 400;
         </select>
       </label>
       <div *ngIf="exceedsLimit" style="color:#b45309;font-size:0.9em;margin-top:-4px;">
-        ⚠ Amount over {{ AMOUNT_LIMIT }} — this will be saved as an Individual sale.
+        ⚠ Amount over {{ AMOUNT_LIMIT }} — this will be saved as an Bulk sale sale.
       </div>
       <label>
         Phone Number

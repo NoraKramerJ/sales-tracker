@@ -23,7 +23,7 @@ public class SaleService {
     // Enforce the business rule: amount over the limit forces sale type to Individual.
     private void applyTypeRule(Sale sale) {
         if (sale.getAmount() != null && sale.getAmount() > AMOUNT_LIMIT) {
-            sale.setSaleType(SaleType.INDIVIDUAL);
+            sale.setSaleType(SaleType.BULK);
         }
     }
 

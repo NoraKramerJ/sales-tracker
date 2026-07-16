@@ -21,6 +21,8 @@ import { SaleService } from '../sale.service';
           <th>Status</th>
           <th>Sale Type</th>
           <th>Phone</th>
+          <th>Company Website</th>
+          <th>Tax ID</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -33,6 +35,12 @@ import { SaleService } from '../sale.service';
           <td>{{ sale.status }}</td>
           <td>{{ sale.saleType ? (sale.saleType | titlecase) : '—' }}</td>
           <td>{{ sale.phoneNumber ?? '—' }}</td>
+          <td>
+            <a *ngIf="sale.companyWebsite" [href]="sale.companyWebsite" target="_blank"
+               style="color:#1565c0;">{{ sale.companyWebsite }}</a>
+            <span *ngIf="!sale.companyWebsite">—</span>
+          </td>
+          <td>{{ sale.taxId ?? '—' }}</td>
           <td style="display:flex;gap:8px;">
             <button class="primary" [routerLink]="['/edit', sale.id]">Edit</button>
             <button class="danger" (click)="delete(sale.id!)">Delete</button>

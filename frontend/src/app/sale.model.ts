@@ -6,5 +6,7 @@ export interface Sale {
   saleDate: string;
   status: string;
   saleType?: 'BULK' | 'INDIVIDUAL';
-  phoneNumber?: string;  // contact number entered per sale
+  phoneNumber?: string;
+  companyWebsite?: string;  // BULK only
+  taxId?: string;           // BULK only
 }

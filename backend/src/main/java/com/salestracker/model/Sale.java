@@ -36,8 +36,16 @@ public class Sale {
     private SaleType saleType; // BULK or INDIVIDUAL
 
     @Column(name = "phone_number")
-    @Schema(description = "Contact number entered per sale", example = "+1-555-0100")
-    private String phoneNumber; // contact number entered per sale
+    @Schema(description = "Contact number entered per sale", example = "555-123-4567")
+    private String phoneNumber;
+
+    @Column(name = "company_website")
+    @Schema(description = "BULK only: company webpage", example = "https://acmecorp.com")
+    private String companyWebsite;
+
+    @Column(name = "tax_id")
+    @Schema(description = "BULK only: company tax ID", example = "12-3456789")
+    private String taxId;
 
     public Sale() {}
 
@@ -64,4 +72,10 @@ public class Sale {
 
     public String getPhoneNumber() { return phoneNumber; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+
+    public String getCompanyWebsite() { return companyWebsite; }
+    public void setCompanyWebsite(String companyWebsite) { this.companyWebsite = companyWebsite; }
+
+    public String getTaxId() { return taxId; }
+    public void setTaxId(String taxId) { this.taxId = taxId; }
 }

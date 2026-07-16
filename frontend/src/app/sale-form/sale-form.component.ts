@@ -5,8 +5,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Sale } from '../sale.model';
 import { SaleService } from '../sale.service';
 
-// Sales over this amount must be recorded as Individual (not Retail).
-const AMOUNT_LIMIT = 400;
+const MIN_AMOUNT = 30;
+const BULK_THRESHOLD = 450;
+// Accepts: 5551234567 | 555-123-4567 | (555) 123-4567 | (555)123-4567
+const US_PHONE_REGEX = /^\(?[2-9]\d{2}\)?[\s\-]?[2-9]\d{2}[\s\-]?\d{4}$/;
+// Accepts http:// or https:// URLs with a valid domain
+const URL_REGEX = /^https?:\/\/[\w\-]+(\.[\w\-]+)+([\w\-._~:/?#\[\]@!$&'()*+,;=%]*)?$/;
 
 @Component({
   selector: 'app-sale-form',
@@ -25,7 +29,8 @@ const AMOUNT_LIMIT = 400;
       </label>
       <label>
         Amount
-        <input [(ngModel)]="sale.amount" name="amount" type="number" step="0.01" required />
+        <input [(ngModel)]="sale.amount" name="amount" type="number" step="0.01" min="30" required (ngModelChange)="onAmountChange()" />
+        <div *ngIf="amountTooLow" style="color:#c62828;font-size:0.85em;margin-top:4px;">Minimum sale amount is $30.</div>
       </label>
       <label>
         Sale Date
@@ -39,37 +44,71 @@ const AMOUNT_LIMIT = 400;
           <option>Closed</option>
         </select>
       </label>
-      <label>
-        Sale Type
-        <select [(ngModel)]="sale.saleType" name="saleType">
-          <option value="BULK">Bulk</option>
-          <option value="INDIVIDUAL">Individual</option>
-        </select>
-      </label>
-      <div *ngIf="exceedsLimit" style="color:#b45309;font-size:0.9em;margin-top:-4px;">
-        ⚠ Amount over {{ AMOUNT_LIMIT }} — this will be saved as an Bulk sale sale.
+      <div>
+        <div style="font-size:14px;margin-bottom:4px;">Sale Type</div>
+        <span [ngStyle]="{
+          'padding': '4px 12px',
+          'border-radius': '12px',
+          'font-weight': '600',
+          'font-size': '13px',
+          'background': derivedSaleType === 'INDIVIDUAL' ? '#e8f5e9' : '#e3f2fd',
+          'color':      derivedSaleType === 'INDIVIDUAL' ? '#2e7d32' : '#1565c0'
+        }">{{ derivedSaleType === 'INDIVIDUAL' ? 'Individual' : 'Bulk' }}</span>
+        <div style="color:#888;font-size:0.82em;margin-top:4px;">
+          {{ derivedSaleType === 'INDIVIDUAL' ? 'Amount \u2264 $450 \u2014 automatically Individual' : 'Amount > $450 \u2014 automatically Bulk' }}
+        </div>
       </div>
       <label>
-        Phone Number
-        <input [(ngModel)]="sale.phoneNumber" name="phoneNumber" placeholder="555-100-0000" />
+        Phone Number *
+        <input [(ngModel)]="sale.phoneNumber" name="phoneNumber" required
+               placeholder="555-123-4567 or (555) 123-4567"
+               (ngModelChange)="onPhoneChange()" />
+        <div *ngIf="phoneInvalid" style="color:#c62828;font-size:0.85em;margin-top:4px;">
+          Enter a valid US phone number, e.g. 555-123-4567 or (555) 123-4567.
+        </div>
       </label>
+
+      <!-- Bulk-only fields — only shown when amount > $450 -->
+      <ng-container *ngIf="derivedSaleType === 'BULK'">
+        <div style="border-top:1px solid #e0e0e0;padding-top:12px;">
+          <div style="font-size:13px;font-weight:600;color:#1565c0;margin-bottom:8px;">Bulk Sale Details</div>
+          <label>
+            Company Website *
+            <input [(ngModel)]="sale.companyWebsite" name="companyWebsite"
+                   placeholder="https://company.com"
+                   (ngModelChange)="onBulkFieldChange()" />
+            <div *ngIf="websiteInvalid" style="color:#c62828;font-size:0.85em;margin-top:4px;">
+              Enter a valid URL, e.g. https://company.com.
+            </div>
+          </label>
+          <label style="margin-top:8px;display:block;">
+            Tax ID *
+            <input [(ngModel)]="sale.taxId" name="taxId"
+                   placeholder="12-3456789"
+                   (ngModelChange)="onBulkFieldChange()" />
+            <div *ngIf="taxIdInvalid" style="color:#c62828;font-size:0.85em;margin-top:4px;">
+              Tax ID is required for Bulk sales.
+            </div>
+          </label>
+        </div>
+      </ng-container>
+
       <div style="display:flex;gap:8px;margin-top:8px;">
-        <button class="primary" type="submit">{{ isEdit ? 'Update' : 'Create' }}</button>
+        <button class="primary" type="submit" [disabled]="amountTooLow || phoneInvalid || websiteInvalid || taxIdInvalid">{{ isEdit ? 'Update' : 'Create' }}</button>
         <button class="secondary" type="button" (click)="cancel()">Cancel</button>
       </div>
     </form>
   `
 })
 export class SaleFormComponent implements OnInit {
-  sale: Sale = { customerName: '', product: '', amount: 0, saleDate: '', status: 'Open', saleType: 'BULK' };
+  sale: Sale = { customerName: '', product: '', amount: 0, saleDate: '', status: 'Open', phoneNumber: '' };
+  derivedSaleType: 'INDIVIDUAL' | 'BULK' = 'INDIVIDUAL';
+  amountTooLow = true;
+  phoneInvalid = true;
+  websiteInvalid = false; // only required when BULK
+  taxIdInvalid = false;   // only required when BULK
   isEdit = false;
   private id?: number;
-  readonly AMOUNT_LIMIT = AMOUNT_LIMIT;
-
-  // True when the amount exceeds the limit but the type isn't yet Individual.
-  get exceedsLimit(): boolean {
-    return this.sale.amount > AMOUNT_LIMIT && this.sale.saleType !== 'INDIVIDUAL';
-  }
 
   constructor(
     private route: ActivatedRoute,
@@ -82,23 +121,41 @@ export class SaleFormComponent implements OnInit {
     if (idParam) {
       this.isEdit = true;
       this.id = +idParam;
-      this.saleService.getById(this.id).subscribe(data => this.sale = data);
+      this.saleService.getById(this.id).subscribe(data => {
+        this.sale = data;
+        this.onAmountChange();
+        this.onPhoneChange();
+      });
     }
   }
 
-  save(): void {
-    // Rule: amount over the limit forces the sale type to Individual. Warn first.
-    if (this.sale.amount > AMOUNT_LIMIT && this.sale.saleType !== 'INDIVIDUAL') {
-      const ok = confirm(
-        `Amount ${this.sale.amount} exceeds ${AMOUNT_LIMIT}, so this sale must be recorded ` +
-        `as "Individual" (not "Bulk"). Save it as Individual?`
-      );
-      if (!ok) {
-        return; // let the user adjust the amount or type instead
-      }
-      this.sale.saleType = 'INDIVIDUAL';
+  onAmountChange(): void {
+    this.amountTooLow = this.sale.amount < MIN_AMOUNT;
+    this.derivedSaleType = this.sale.amount <= BULK_THRESHOLD ? 'INDIVIDUAL' : 'BULK';
+    if (this.derivedSaleType === 'INDIVIDUAL') {
+      // clear bulk fields and validation when switching back to individual
+      this.sale.companyWebsite = undefined;
+      this.sale.taxId = undefined;
+      this.websiteInvalid = false;
+      this.taxIdInvalid = false;
+    } else {
+      this.onBulkFieldChange();
     }
+  }
 
+  onPhoneChange(): void {
+    const val = (this.sale.phoneNumber ?? '').trim();
+    this.phoneInvalid = !val || !US_PHONE_REGEX.test(val);
+  }
+
+  onBulkFieldChange(): void {
+    const url = (this.sale.companyWebsite ?? '').trim();
+    this.websiteInvalid = !url || !URL_REGEX.test(url);
+    this.taxIdInvalid   = !(this.sale.taxId ?? '').trim();
+  }
+
+  save(): void {
+    if (this.amountTooLow || this.phoneInvalid || this.websiteInvalid || this.taxIdInvalid) return;
     if (this.isEdit && this.id) {
       this.saleService.update(this.id, this.sale).subscribe(() => this.router.navigate(['/']));
     } else {

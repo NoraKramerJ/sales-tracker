@@ -1,9 +1,3 @@
-export interface UserType {
-  id: number;
-  typeName: string;
-  phoneNumber?: string;
-}
-
 export interface Sale {
   id?: number;
   customerName: string;
@@ -11,5 +5,6 @@ export interface Sale {
   amount: number;
   saleDate: string;
   status: string;
-  userType?: UserType;
+  saleType?: 'BULK' | 'INDIVIDUAL';
+  phoneNumber?: string;  // contact number entered per sale
 }

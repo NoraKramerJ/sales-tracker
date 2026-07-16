@@ -1,26 +1,43 @@
 package com.salestracker.model;
 
+import com.salestracker.enums.SaleType;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "sales")
+@Schema(description = "A sales record")
 public class Sale {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "Auto-generated identifier", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
     private Long id;
 
+    @Schema(description = "Name of the customer", example = "Acme Corp")
     private String customerName;
+
+    @Schema(description = "Product sold", example = "Widget Pro")
     private String product;
+
+    @Schema(description = "Sale amount", example = "1499.99")
     private Double amount;
+
+    @Schema(description = "Date the sale was made", example = "2026-07-16")
     private LocalDate saleDate;
+
+    @Schema(description = "Sale status", example = "Open", allowableValues = {"Open", "Closed", "Pending"})
     private String status; // e.g. "Open", "Closed", "Pending"
 
-    // Many Sales belong to One UserType
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_type_id")  // matches the FK column in the sales table
-    private UserType userType;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sale_type")
+    @Schema(description = "Type of sale", example = "INDIVIDUAL")
+    private SaleType saleType; // BULK or INDIVIDUAL
+
+    @Column(name = "phone_number")
+    @Schema(description = "Contact number entered per sale", example = "+1-555-0100")
+    private String phoneNumber; // contact number entered per sale
 
     public Sale() {}
 
@@ -42,6 +59,9 @@ public class Sale {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
-    public UserType getUserType() { return userType; }
-    public void setUserType(UserType userType) { this.userType = userType; }
+    public SaleType getSaleType() { return saleType; }
+    public void setSaleType(SaleType saleType) { this.saleType = saleType; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 }

@@ -19,7 +19,8 @@ import { SaleService } from '../sale.service';
           <th>Amount</th>
           <th>Date</th>
           <th>Status</th>
-          <th>User Type</th>
+          <th>Sale Type</th>
+          <th>Phone</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -30,7 +31,8 @@ import { SaleService } from '../sale.service';
           <td>{{ sale.amount | currency }}</td>
           <td>{{ sale.saleDate }}</td>
           <td>{{ sale.status }}</td>
-          <td>{{ sale.userType?.typeName ?? '—' }}</td>
+          <td>{{ sale.saleType ? (sale.saleType | titlecase) : '—' }}</td>
+          <td>{{ sale.phoneNumber ?? '—' }}</td>
           <td style="display:flex;gap:8px;">
             <button class="primary" [routerLink]="['/edit', sale.id]">Edit</button>
             <button class="danger" (click)="delete(sale.id!)">Delete</button>

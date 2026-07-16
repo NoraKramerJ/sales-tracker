@@ -2,8 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Sale, UserType } from '../sale.model';
+import { Sale } from '../sale.model';
 import { SaleService } from '../sale.service';
+
+// Sales over this amount must be recorded as Individual (not Retail).
+const AMOUNT_LIMIT = 400;
 
 @Component({
   selector: 'app-sale-form',
@@ -37,11 +40,18 @@ import { SaleService } from '../sale.service';
         </select>
       </label>
       <label>
-        User Type
-        <select [(ngModel)]="selectedUserTypeId" name="userTypeId">
-          <option [ngValue]="null">-- None --</option>
-          <option *ngFor="let ut of userTypes" [ngValue]="ut.id">{{ ut.typeName }}</option>
+        Sale Type
+        <select [(ngModel)]="sale.saleType" name="saleType">
+          <option value="BULK">Bulk</option>
+          <option value="INDIVIDUAL">Individual</option>
         </select>
+      </label>
+      <div *ngIf="exceedsLimit" style="color:#b45309;font-size:0.9em;margin-top:-4px;">
+        ⚠ Amount over {{ AMOUNT_LIMIT }} — this will be saved as an Individual sale.
+      </div>
+      <label>
+        Phone Number
+        <input [(ngModel)]="sale.phoneNumber" name="phoneNumber" placeholder="555-100-0000" />
       </label>
       <div style="display:flex;gap:8px;margin-top:8px;">
         <button class="primary" type="submit">{{ isEdit ? 'Update' : 'Create' }}</button>
@@ -51,11 +61,15 @@ import { SaleService } from '../sale.service';
   `
 })
 export class SaleFormComponent implements OnInit {
-  sale: Sale = { customerName: '', product: '', amount: 0, saleDate: '', status: 'Open' };
-  userTypes: UserType[] = [];
-  selectedUserTypeId: number | null = null;
+  sale: Sale = { customerName: '', product: '', amount: 0, saleDate: '', status: 'Open', saleType: 'BULK' };
   isEdit = false;
   private id?: number;
+  readonly AMOUNT_LIMIT = AMOUNT_LIMIT;
+
+  // True when the amount exceeds the limit but the type isn't yet Individual.
+  get exceedsLimit(): boolean {
+    return this.sale.amount > AMOUNT_LIMIT && this.sale.saleType !== 'INDIVIDUAL';
+  }
 
   constructor(
     private route: ActivatedRoute,
@@ -64,25 +78,26 @@ export class SaleFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Load user types for the dropdown
-    this.saleService.getAllUserTypes().subscribe(data => this.userTypes = data);
-
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.isEdit = true;
       this.id = +idParam;
-      this.saleService.getById(this.id).subscribe(data => {
-        this.sale = data;
-        this.selectedUserTypeId = data.userType?.id ?? null;
-      });
+      this.saleService.getById(this.id).subscribe(data => this.sale = data);
     }
   }
 
   save(): void {
-    // Attach the selected user type id before saving
-    this.sale.userType = this.selectedUserTypeId
-      ? { id: this.selectedUserTypeId, typeName: '' }
-      : undefined;
+    // Rule: amount over the limit forces the sale type to Individual. Warn first.
+    if (this.sale.amount > AMOUNT_LIMIT && this.sale.saleType !== 'INDIVIDUAL') {
+      const ok = confirm(
+        `Amount ${this.sale.amount} exceeds ${AMOUNT_LIMIT}, so this sale must be recorded ` +
+        `as "Individual" (not "Bulk"). Save it as Individual?`
+      );
+      if (!ok) {
+        return; // let the user adjust the amount or type instead
+      }
+      this.sale.saleType = 'INDIVIDUAL';
+    }
 
     if (this.isEdit && this.id) {
       this.saleService.update(this.id, this.sale).subscribe(() => this.router.navigate(['/']));

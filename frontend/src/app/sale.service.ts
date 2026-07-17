@@ -22,7 +22,7 @@ export class SaleService {
   }
 
   update(id: number, sale: Sale): Observable<Sale> {
-    return this.http.put<Sale>(`${this.apiUrl}/${id}`, sale);
+    return this.http.patch<Sale>(`${this.apiUrl}/${id}`, sale);
   }
 
   delete(id: number): Observable<void> {

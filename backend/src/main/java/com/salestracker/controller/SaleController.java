@@ -57,24 +57,6 @@ public class SaleController {
         return saleService.create(sale);
     }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Update an existing sale")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Sale updated"),
-            @ApiResponse(responseCode = "404", description = "Sale not found",
-                    content = @Content(schema = @Schema(hidden = true)))
-    })
-    public ResponseEntity<Sale> update(
-            @Parameter(description = "Id of the sale to update", example = "1")
-            @PathVariable Long id,
-            @RequestBody Sale sale) {
-        try {
-            return ResponseEntity.ok(saleService.update(id, sale));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
     @PatchMapping("/{id}")
     @Operation(summary = "Partially update a sale", description = "Only fields included in the request body will be updated.")
     @ApiResponses({

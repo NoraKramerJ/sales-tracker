@@ -22,7 +22,7 @@ public class SaleService {
     private static final double  BULK_THRESHOLD = 450;
     // Accepts: 5551234567 | 555-123-4567 | (555) 123-4567 | (555)123-4567
     private static final Pattern US_PHONE = Pattern.compile(
-        "^\\(?[2-9]\\d{2}\\)?[\\s\\-]?[2-9]\\d{2}[\\s\\-]?\\d{4}$"
+        "^\\(?[2-9]\\d{2}\\)?[\\s\\-]?\\d{3}[\\s\\-]?\\d{4}$"
     );
     // Accepts http:// or https:// URLs with a valid domain
     private static final Pattern URL = Pattern.compile(

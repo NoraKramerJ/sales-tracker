@@ -70,6 +70,8 @@ public class SaleController {
             @RequestBody Sale sale) {
         try {
             return ResponseEntity.ok(saleService.patch(id, sale));
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).build();
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }

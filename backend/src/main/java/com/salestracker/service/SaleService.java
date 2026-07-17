@@ -124,6 +124,28 @@ public class SaleService {
         }).orElseThrow(() -> new RuntimeException("Sale not found: " + id));
     }
 
+    public Sale patch(Long id, Sale updates) {
+        return saleRepository.findById(id).map(sale -> {
+            if (updates.getCustomerName() != null) sale.setCustomerName(updates.getCustomerName());
+            if (updates.getProduct() != null)      sale.setProduct(updates.getProduct());
+            if (updates.getAmount() != null) {
+                validateAmount(updates.getAmount());
+                sale.setAmount(updates.getAmount());
+            }
+            if (updates.getSaleDate() != null)     sale.setSaleDate(updates.getSaleDate());
+            if (updates.getStatus() != null)       sale.setStatus(updates.getStatus());
+            if (updates.getPhoneNumber() != null) {
+                validatePhone(updates.getPhoneNumber());
+                sale.setPhoneNumber(updates.getPhoneNumber());
+            }
+            if (updates.getCompanyWebsite() != null) sale.setCompanyWebsite(updates.getCompanyWebsite());
+            if (updates.getTaxId() != null)          sale.setTaxId(updates.getTaxId());
+            applyTypeRule(sale);
+            validateBulkFields(sale);
+            return saleRepository.save(sale);
+        }).orElseThrow(() -> new RuntimeException("Sale not found: " + id));
+    }
+
     public void delete(Long id) {
         saleRepository.deleteById(id);
     }

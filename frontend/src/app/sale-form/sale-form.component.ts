@@ -8,7 +8,7 @@ import { SaleService } from '../sale.service';
 const MIN_AMOUNT = 30;
 const BULK_THRESHOLD = 450;
 // Accepts: 5551234567 | 555-123-4567 | (555) 123-4567 | (555)123-4567
-const US_PHONE_REGEX = /^\(?[2-9]\d{2}\)?[\s\-]?[2-9]\d{2}[\s\-]?\d{4}$/;
+const US_PHONE_REGEX = /^\(?[2-9]\d{2}\)?[\s\-]?\d{3}[\s\-]?\d{4}$/;
 // Accepts http:// or https:// URLs with a valid domain
 const URL_REGEX = /^https?:\/\/[\w\-]+(\.[\w\-]+)+([\w\-._~:/?#\[\]@!$&'()*+,;=%]*)?$/;
 
